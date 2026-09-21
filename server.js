@@ -126,14 +126,27 @@ app.get("/download-file", async (req, res) => {
       secure: true,
     });
 
-    console.log("Fetching Cloudinary file:", url);
+    console.log("Cloudinary URL:", url);
 
     const response = await fetch(url);
 
+    console.log("Cloudinary response status:", response.status);
+    console.log(
+      "Cloudinary response content-type:",
+      response.headers.get("content-type")
+    );
+
     if (!response.ok) {
+      const errorText = await response.text();
+
+      console.error("Cloudinary response:", errorText);
+
       return res.status(response.status).json({
         success: false,
-        error: "File download failed from Cloudinary",
+        error: "Cloudinary rejected the file request",
+        cloudinaryStatus: response.status,
+        cloudinaryResponse: errorText,
+        url,
       });
     }
 
@@ -144,7 +157,8 @@ app.get("/download-file", async (req, res) => {
 
     res.setHeader(
       "Content-Type",
-      response.headers.get("content-type") || "application/octet-stream"
+      response.headers.get("content-type") ||
+        "application/octet-stream"
     );
 
     const contentLength = response.headers.get("content-length");
@@ -164,8 +178,7 @@ app.get("/download-file", async (req, res) => {
       error: error.message,
     });
   }
-});  
-
+});
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
