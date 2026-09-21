@@ -55,6 +55,48 @@ app.post("/delete-image", async (req, res) => {
   }
 });
 
+// 👇 NAYA ENDPOINT — signed download URL generate karta hai
+app.get("/signed-download-url", (req, res) => {
+  try {
+    const { publicId, resourceType, fileName } = req.query;
+
+    console.log("Signed URL request:", { publicId, resourceType, fileName });
+
+    if (!publicId) {
+      return res.status(400).json({
+        success: false,
+        error: "publicId missing",
+      });
+    }
+
+    const baseName = fileName
+      ? fileName.replace(/\.[^.]+$/, "").replace(/[^a-zA-Z0-9-_]/g, "_")
+      : "file";
+
+    const url = cloudinary.url(publicId, {
+      resource_type: resourceType || "raw",
+      type: "upload",
+      sign_url: true,
+      secure: true,
+      flags: `attachment:${baseName}`,
+    });
+
+    console.log("Generated signed URL:", url);
+
+    return res.status(200).json({
+      success: true,
+      url,
+    });
+  } catch (error) {
+    console.error("Signed URL error:", error);
+
+    return res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
