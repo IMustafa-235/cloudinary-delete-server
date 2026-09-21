@@ -99,6 +99,72 @@ app.get("/signed-download-url", (req, res) => {
     });
   }
 });
+app.get("/download-file", async (req, res) => {
+  try {
+    const { publicId, resourceType, fileName } = req.query;
+
+    console.log("Download request:", {
+      publicId,
+      resourceType,
+      fileName,
+    });
+
+    if (!publicId) {
+      return res.status(400).json({
+        success: false,
+        error: "publicId missing",
+      });
+    }
+
+    const safeFileName = fileName
+      ? fileName.replace(/[^a-zA-Z0-9._-]/g, "_")
+      : "file";
+
+    const url = cloudinary.url(publicId, {
+      resource_type: resourceType || "raw",
+      type: "upload",
+      secure: true,
+    });
+
+    console.log("Fetching Cloudinary file:", url);
+
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      return res.status(response.status).json({
+        success: false,
+        error: "File download failed from Cloudinary",
+      });
+    }
+
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="${safeFileName}"`
+    );
+
+    res.setHeader(
+      "Content-Type",
+      response.headers.get("content-type") || "application/octet-stream"
+    );
+
+    const contentLength = response.headers.get("content-length");
+
+    if (contentLength) {
+      res.setHeader("Content-Length", contentLength);
+    }
+
+    const arrayBuffer = await response.arrayBuffer();
+
+    res.send(Buffer.from(arrayBuffer));
+  } catch (error) {
+    console.error("File download error:", error);
+
+    return res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});  
 
 const PORT = process.env.PORT || 3000;
 
