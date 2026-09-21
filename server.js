@@ -76,102 +76,28 @@ app.get("/signed-download-url", (req, res) => {
       ? fileName.replace(/[^a-zA-Z0-9._-]/g, "_")
       : "file";
 
-    const url = cloudinary.url(publicId, {
-      resource_type: resourceType || "raw",
-      type: "upload",
-      sign_url: true,
-      secure: true,
-      flags: `attachment:${safeFileName}`,
-    });
+    const format = safeFileName.includes(".")
+      ? safeFileName.split(".").pop()
+      : undefined;
 
-    console.log("Generated download URL:", url);
+    const url = cloudinary.utils.private_download_url(
+      publicId,
+      format,
+      {
+        resource_type: resourceType || "raw",
+        type: "upload",
+        attachment: true,
+      }
+    );
+
+    console.log("Generated private download URL:", url);
 
     return res.status(200).json({
       success: true,
       url,
     });
   } catch (error) {
-    console.error("Signed URL error:", error);
-
-    return res.status(500).json({
-      success: false,
-      error: error.message,
-    });
-  }
-});
-app.get("/download-file", async (req, res) => {
-  try {
-    const { publicId, resourceType, fileName } = req.query;
-
-    console.log("Download request:", {
-      publicId,
-      resourceType,
-      fileName,
-    });
-
-    if (!publicId) {
-      return res.status(400).json({
-        success: false,
-        error: "publicId missing",
-      });
-    }
-
-    const safeFileName = fileName
-      ? fileName.replace(/[^a-zA-Z0-9._-]/g, "_")
-      : "file";
-
-    const url = cloudinary.url(publicId, {
-      resource_type: resourceType || "raw",
-      type: "upload",
-      secure: true,
-    });
-
-    console.log("Cloudinary URL:", url);
-
-    const response = await fetch(url);
-
-    console.log("Cloudinary response status:", response.status);
-    console.log(
-      "Cloudinary response content-type:",
-      response.headers.get("content-type")
-    );
-
-    if (!response.ok) {
-      const errorText = await response.text();
-
-      console.error("Cloudinary response:", errorText);
-
-      return res.status(response.status).json({
-        success: false,
-        error: "Cloudinary rejected the file request",
-        cloudinaryStatus: response.status,
-        cloudinaryResponse: errorText,
-        url,
-      });
-    }
-
-    res.setHeader(
-      "Content-Disposition",
-      `attachment; filename="${safeFileName}"`
-    );
-
-    res.setHeader(
-      "Content-Type",
-      response.headers.get("content-type") ||
-        "application/octet-stream"
-    );
-
-    const contentLength = response.headers.get("content-length");
-
-    if (contentLength) {
-      res.setHeader("Content-Length", contentLength);
-    }
-
-    const arrayBuffer = await response.arrayBuffer();
-
-    res.send(Buffer.from(arrayBuffer));
-  } catch (error) {
-    console.error("File download error:", error);
+    console.error("Signed download URL error:", error);
 
     return res.status(500).json({
       success: false,
