@@ -54,7 +54,6 @@ app.post("/delete-image", async (req, res) => {
     });
   }
 });
-
 app.get("/signed-download-url", (req, res) => {
   try {
     const { publicId, resourceType, fileName } = req.query;
@@ -86,11 +85,10 @@ app.get("/signed-download-url", (req, res) => {
       {
         resource_type: resourceType || "raw",
         type: "upload",
-        attachment: true,
       }
     );
 
-    console.log("Generated private download URL:", url);
+    console.log("Generated download URL:", url);
 
     return res.status(200).json({
       success: true,
