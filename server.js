@@ -32,9 +32,8 @@ app.post("/delete-image", async (req, res) => {
         error: "publicId missing",
       });
     }
-
     const result = await cloudinary.uploader.destroy(publicId, {
-      resource_type: resourceType || "raw",
+      resource_type: resourceType,
       type: "upload",
       invalidate: true,
     });
