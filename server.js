@@ -22,7 +22,7 @@ app.get("/", (req, res) => {
 
 app.post("/delete-image", async (req, res) => {
   try {
-    const { publicId } = req.body;
+    const { publicId, resourceType } = req.body;
 
     console.log("Delete request:", publicId);
 
@@ -34,7 +34,7 @@ app.post("/delete-image", async (req, res) => {
     }
 
     const result = await cloudinary.uploader.destroy(publicId, {
-      resource_type: "image",
+      resource_type: resourceType || "raw",
       type: "upload",
       invalidate: true,
     });
