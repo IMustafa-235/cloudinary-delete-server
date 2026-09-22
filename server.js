@@ -33,13 +33,20 @@ app.post("/delete-image", async (req, res) => {
       });
     }
     const result = await cloudinary.uploader.destroy(publicId, {
-      resource_type: resourceType,
+      resource_type: resourceType || "image",
       type: "upload",
       invalidate: true,
     });
-
+    
     console.log("Cloudinary result:", result);
-
+    
+    if (result.result !== "ok") {
+      return res.status(400).json({
+        success: false,
+        error: `Cloudinary delete failed: ${result.result}`,
+      });
+    }
+    
     return res.status(200).json({
       success: true,
       result,
